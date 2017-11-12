@@ -70,7 +70,7 @@ var options = {
 		src: 60,
 		tar: 160,
 	},
-	blankBeat: 0,
+	blankBeat: 0.0,
 	output: ""
 }
 
@@ -112,6 +112,30 @@ if(argv.f){
 var data = loadMidi(options.midiFile)
 var track = data.tracks[options.trackNum]
 
+
+// output event log to file
+var eventStr = ''
+eventStr += "T     | type              | Note | vel \n"
+eventStr += "===== | ================= | ==== | ====\n"
+for (e of track){
+	var row = `${leftpad(e.deltaTime, 5)} | `+
+		`${str(e.type, 17)} | `+
+		`${pitch(e.noteNumber)}${str(oct(e.noteNumber), 2)} | `+
+		`${str(e.velocity, 4)}`
+	eventStr += row + '\n'
+	//if (!/note(On|Off)/.test(e.type)) console.log(e)
+}
+fs.writeFileSync('events.txt',eventStr)
+
+
+// mapping deltaTime to the correct tempo
+if(options.tempo.fix){
+	for (e of track){
+		e.deltaTime = Math.round(e.deltaTime * options.tempo.tar / options.tempo.src)
+	}
+}
+
+
 // fix the tempo and remove beginning blank
 // data.header.ticksPerBeat = 768
 track[0].deltaTime = 0
@@ -123,16 +147,9 @@ for(var i = 0;track[i].type != 'noteOn';i++){
 			track[i].microsecondsPerBeat = 
 				Math.round(track[0].microsecondsPerBeat * options.tempo.src / options.tempo.tar)
 		if(options.blankBeat && !blankBeatSet){
-			track[i+1] = data.header.ticksPerBeat * options.blankBeat
+			track[i+1].deltaTime = Math.round(data.header.ticksPerBeat * options.blankBeat)
 			blankBeatSet = true
 		}
-	}
-}
-
-// mapping deltaTime to the correct tempo
-if(options.tempo.fix){
-	for (e of track){
-		e.deltaTime = Math.round(e.deltaTime * options.tempo.tar / options.tempo.src)
 	}
 }
 
@@ -168,10 +185,8 @@ for (var i = 0;i<track.length;i++){
 	}
 }
 
-/*
-// output event log to file
-var eventStr = ''
-eventStr += "T     | type              | Note | vel \n"
+
+eventStr = "T     | type              | Note | vel \n"
 eventStr += "===== | ================= | ==== | ====\n"
 for (e of track){
 	var row = `${leftpad(e.deltaTime, 5)} | `+
@@ -181,8 +196,8 @@ for (e of track){
 	eventStr += row + '\n'
 	//if (!/note(On|Off)/.test(e.type)) console.log(e)
 }
-fs.writeFileSync('events.txt',eventStr)
-*/
+fs.writeFileSync('events_new.txt',eventStr)
+
 
 
 // Export the final data to new midi file
