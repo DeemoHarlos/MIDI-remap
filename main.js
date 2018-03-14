@@ -1,5 +1,5 @@
 const fs = require('fs')
-const midi = require('midi-file')
+const midi = require('./midi-file')
 const leftpad = require('left-pad')
 const argv = require('minimist')(process.argv.slice(2));
 
@@ -74,7 +74,7 @@ var options = {
 	output: ""
 }
 
-//help text
+// help text
 if(argv.h){
 	console.log("Command line usage:")
 	console.log("node [midi file path] [options] [value] [options] [value]...")
@@ -110,8 +110,6 @@ if(argv.f){
 
 
 var data = loadMidi(options.midiFile)
-var track = data.tracks[options.trackNum]
-
 
 // output event log to file
 var eventStr = ''
